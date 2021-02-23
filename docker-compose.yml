@@ -1,0 +1,74 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    ports: 
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=scribe_testing
+    volumes:
+      # directory with sql sripts seeding database
+      # scripts are being executed in alphabetic order
+      # https://gist.github.com/onjin/2dd3cc52ef79069de1faa2dfd456c945
+      - ../../../williamszerdy/db:/docker-entrypoint-initdb.d
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis_data:/data
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: wabbit
+    ports:
+      - 4369:4369
+      - 5671-5672:5671-5672
+      - 15672:15672
+    volumes:
+      - ./data:/var/lib/rabbitmq/mnesia      
+  influxdb:
+    image: influxdb:latest
+    env_file: configuration.env
+    ports:
+      - '8086:8086'
+    volumes:
+      - ./influxdb_data:/var/lib/influxdb
+      - ./influxdb.conf:/etc/influxdb/influxdb.conf
+  telegraf:
+    image: telegraf:latest
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - influxdb
+    links:
+      - influxdb
+    ports:
+      - '8092:8092/udp'
+  grafana:
+    image: grafana/grafana:latest
+    depends_on:
+      - influxdb
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./grafana/dashboards/:/var/lib/grafana/dashboards/
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8083:8080
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+volumes:
+  redis_data:
+    external: false
+  grafana_data: {}
+  influxdb_data: {}
