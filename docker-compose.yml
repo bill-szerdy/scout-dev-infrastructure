@@ -28,6 +28,16 @@ services:
       - 15672:15672
     volumes:
       - ./data:/var/lib/rabbitmq/mnesia      
+  lex:
+    image: lex:latest
+    environment:
+      - ENV=debug
+    depends_on:
+      - redis
+      - rabbitmq
+    links:
+      - redis
+      - rabbitmq
   influxdb:
     image: influxdb:latest
     env_file: configuration.env
