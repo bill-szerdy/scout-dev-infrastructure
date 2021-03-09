@@ -35,11 +35,12 @@ services:
     depends_on:
       - redis
       - rabbitmq
+      - telegraf
     links:
       - redis
       - rabbitmq
   influxdb:
-    image: influxdb:latest
+    image: influxdb:1.8.4
     env_file: configuration.env
     ports:
       - '8086:8086'
@@ -47,7 +48,7 @@ services:
       - ./influxdb_data:/var/lib/influxdb
       - ./influxdb.conf:/etc/influxdb/influxdb.conf
   telegraf:
-    image: telegraf:latest
+    image: telegraf:1.16
     volumes:
       - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
     depends_on:
