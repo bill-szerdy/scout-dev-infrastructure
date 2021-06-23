@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:11
     restart: always
     ports: 
       - 5432:5432
@@ -57,16 +57,6 @@ services:
       - influxdb
     ports:
       - '8092:8092/udp'
-  grafana:
-    image: grafana/grafana:latest
-    depends_on:
-      - influxdb
-    ports:
-      - '3000:3000'
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
-      - ./grafana/dashboards/:/var/lib/grafana/dashboards/
   adminer:
     image: adminer
     restart: always
@@ -78,8 +68,22 @@ services:
       - postgres
     environment:
       - ADMINER_DEFAULT_SERVER=postgres
+  grafana:
+    image: grafana/grafana:latest
+    depends_on:
+      - influxdb
+    env_file: configuration.env
+    links:
+      - influxdb
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./grafana/dashboards/:/var/lib/grafana/dashboards/
+
 volumes:
   redis_data:
     external: false
-  grafana_data: {}
   influxdb_data: {}
+  grafana_data: {}
